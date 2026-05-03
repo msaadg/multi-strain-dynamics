@@ -1,0 +1,262 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{float}
+\geometry{a4paper, margin=1in}
+
+\title{Survival of the Fittest: A Mathematical Study of Multi-Strain SIR Dynamics under Differential Vaccine Efficacy}
+\author{Team Members}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This project investigates the competitive dynamics of two distinct viral strains competing for a single host population. We extend the standard epidemiological framework to an SVIR (Susceptible-Vaccinated-Infected-Recovered) model to analyze how differential vaccine efficacy dictates which strain achieves endemicity and which is driven to extinction.
+\end{abstract}
+
+\section{Introduction and Mathematical Model}
+We model the population using the following system of non-linear ordinary differential equations:
+\begin{align}
+\frac{dS}{dt} &= \Lambda - (\beta_1 I_1 + \beta_2 I_2)S - (\nu + \mu)S \label{eq:S} \\
+\frac{dV}{dt} &= \nu S - (\sigma_1 \beta_1 I_1 + \sigma_2 \beta_2 I_2)V - \mu V \label{eq:V} \\
+\frac{dI_1}{dt} &= (\beta_1 S + \sigma_1 \beta_1 V)I_1 - (\gamma_1 + \mu)I_1 \label{eq:I1} \\
+\frac{dI_2}{dt} &= (\beta_2 S + \sigma_2 \beta_2 V)I_2 - (\gamma_2 + \mu)I_2 \label{eq:I2} \\
+\frac{dR}{dt} &= \gamma_1 I_1 + \gamma_2 I_2 - \mu R \label{eq:R}
+\end{align}
+where $\sigma_n = 1 - \epsilon_n$, representing the vaccine leakage for strain $n$. We assume a constant population normalized to $N=1$. Therefore, the recruitment rate is equal to the natural mortality rate ($\Lambda = \mu$), ensuring that $S + V + I_1 + I_2 + R = 1$ at all times $t$.
+
+\section{Local Stability Analysis}
+\subsection{Disease-Free Equilibrium (DFE)}
+The Disease-Free Equilibrium (DFE) represents the state where no disease is present in the population. We find the DFE by setting the derivatives of the system to zero and assuming $I_1 = 0$ and $I_2 = 0$.
+
+From Equation (\ref{eq:S}), setting $I_1 = I_2 = 0$:
+\begin{align*}
+\Lambda - (\nu + \mu)S &= 0 \\
+S^* &= \frac{\Lambda}{\nu + \mu}
+\end{align*}
+
+From Equation (\ref{eq:V}):
+\begin{align*}
+\nu S^* - \mu V &= 0 \\
+V^* &= \frac{\nu}{\mu} S^* = \frac{\nu \Lambda}{\mu(\nu + \mu)}
+\end{align*}
+
+From Equation (\ref{eq:R}), setting $I_1 = I_2 = 0$:
+\begin{align*}
+-\mu R &= 0 \implies R^* = 0
+\end{align*}
+
+Thus, the Disease-Free Equilibrium, denoted as $E_0$, is given by:
+\begin{equation}
+E_0 = \left( \frac{\Lambda}{\nu + \mu}, \frac{\nu \Lambda}{\mu(\nu + \mu)}, 0, 0, 0 \right)
+\end{equation}
+
+\subsection{Jacobian Matrix and Local Stability}
+To analyze the local stability of the DFE, we construct the Jacobian matrix $J$ of the system. The matrix is given by:
+
+\begin{equation}
+\resizebox{\textwidth}{!}{
+$J = \begin{bmatrix}
+-(\beta_1 I_1 + \beta_2 I_2) - (\nu + \mu) & 0 & -\beta_1 S & -\beta_2 S & 0 \\
+\nu & -(\sigma_1 \beta_1 I_1 + \sigma_2 \beta_2 I_2) - \mu & -\sigma_1 \beta_1 V & -\sigma_2 \beta_2 V & 0 \\
+\beta_1 I_1 & \sigma_1 \beta_1 I_1 & (\beta_1 S + \sigma_1 \beta_1 V) - (\gamma_1 + \mu) & 0 & 0 \\
+\beta_2 I_2 & \sigma_2 \beta_2 I_2 & 0 & (\beta_2 S + \sigma_2 \beta_2 V) - (\gamma_2 + \mu) & 0 \\
+0 & 0 & \gamma_1 & \gamma_2 & -\mu
+\end{bmatrix}$
+}
+\end{equation}
+
+Evaluating the Jacobian at the Disease-Free Equilibrium $E_0(S^*, V^*, 0, 0, 0)$:
+
+\begin{equation}
+\resizebox{\textwidth}{!}{
+$J(E_0) = \begin{bmatrix}
+-(\nu + \mu) & 0 & -\beta_1 S^* & -\beta_2 S^* & 0 \\
+\nu & -\mu & -\sigma_1 \beta_1 V^* & -\sigma_2 \beta_2 V^* & 0 \\
+0 & 0 & (\beta_1 S^* + \sigma_1 \beta_1 V^*) - (\gamma_1 + \mu) & 0 & 0 \\
+0 & 0 & 0 & (\beta_2 S^* + \sigma_2 \beta_2 V^*) - (\gamma_2 + \mu) & 0 \\
+0 & 0 & \gamma_1 & \gamma_2 & -\mu
+\end{bmatrix}$
+}
+\end{equation}
+
+Because $J(E_0)$ is a block-triangular matrix, the eigenvalues are simply the entries on the main diagonal of the blocks: $\lambda_1 = -(\nu + \mu)$, $\lambda_2 = -\mu$, $\lambda_5 = -\mu$, and the two key eigenvalues:
+\begin{align}
+\lambda_3 &= (\beta_1 S^* + \sigma_1 \beta_1 V^*) - (\gamma_1 + \mu) \\
+\lambda_4 &= (\beta_2 S^* + \sigma_2 \beta_2 V^*) - (\gamma_2 + \mu)
+\end{align}
+For local asymptotic stability, we require all eigenvalues to be strictly negative ($\lambda_i < 0$). This directly leads to the derivation of the Basic Reproduction Number, $R_0$.
+
+\subsection{Basic Reproduction Number ($R_0$)}
+We can formally derive $R_0$ using the Next-Generation Matrix method. We isolate the infected compartments, $I_1$ and $I_2$. The rate of appearance of new infections ($\mathcal{F}$) and the rate of transfer out of the compartments ($\mathcal{V}$) are:
+
+\begin{equation}
+\mathcal{F} = \begin{bmatrix} (\beta_1 S + \sigma_1 \beta_1 V)I_1 \\ (\beta_2 S + \sigma_2 \beta_2 V)I_2 \end{bmatrix}, \quad
+\mathcal{V} = \begin{bmatrix} (\gamma_1 + \mu)I_1 \\ (\gamma_2 + \mu)I_2 \end{bmatrix}
+\end{equation}
+
+The Jacobians $F$ and $V$ evaluated at the DFE ($S^*, V^*, 0, 0, 0$) are:
+
+\begin{equation}
+F = \begin{bmatrix}
+\beta_1 S^* + \sigma_1 \beta_1 V^* & 0 \\
+0 & \beta_2 S^* + \sigma_2 \beta_2 V^*
+\end{bmatrix}, \quad
+V = \begin{bmatrix}
+\gamma_1 + \mu & 0 \\
+0 & \gamma_2 + \mu
+\end{bmatrix}
+\end{equation}
+
+The Next-Generation Matrix is $K = F V^{-1}$:
+
+\begin{equation}
+K = \begin{bmatrix}
+\frac{\beta_1 S^* + \sigma_1 \beta_1 V^*}{\gamma_1 + \mu} & 0 \\
+0 & \frac{\beta_2 S^* + \sigma_2 \beta_2 V^*}{\gamma_2 + \mu}
+\end{bmatrix}
+\end{equation}
+
+The basic reproduction number $R_0$ is the spectral radius of $K$, $\rho(K)$. Since $K$ is a diagonal matrix, its eigenvalues are its diagonal entries. Thus, we can define the strain-specific reproduction numbers:
+
+\begin{align}
+R_{0,1} &= \frac{\beta_1 S^* + \sigma_1 \beta_1 V^*}{\gamma_1 + \mu} \\
+R_{0,2} &= \frac{\beta_2 S^* + \sigma_2 \beta_2 V^*}{\gamma_2 + \mu}
+\end{align}
+
+The overall basic reproduction number is $R_0 = \max(R_{0,1}, R_{0,2})$. If $R_0 < 1$, the DFE is locally asymptotically stable, meaning the disease will die out if introduced in small quantities.
+
+\section{Global Stability Analysis}
+To prove the global asymptotic stability (GAS) of the Disease-Free Equilibrium $E_0(S^*, V^*, 0, 0, 0)$ when $R_0 \le 1$, we construct a Volterra-type Lyapunov function. Let $L: \mathbb{R}^4_+ \to \mathbb{R}$ be defined as:
+
+\begin{equation}
+L(S, V, I_1, I_2) = \left( S - S^* - S^* \ln \frac{S}{S^*} \right) + \left( V - V^* - V^* \ln \frac{V}{V^*} \right) + I_1 + I_2
+\end{equation}
+
+Note that $L$ is positive definite for all $S, V > 0$ and $L = 0$ strictly at the equilibrium $(S^*, V^*, 0, 0)$. The orbital derivative of $L$ along the solutions of the system is:
+
+\begin{equation}
+\frac{dL}{dt} = \left( 1 - \frac{S^*}{S} \right) \frac{dS}{dt} + \left( 1 - \frac{V^*}{V} \right) \frac{dV}{dt} + \frac{dI_1}{dt} + \frac{dI_2}{dt}
+\end{equation}
+
+At the DFE, the following equilibrium identities hold: $\Lambda = (\nu + \mu)S^*$ and $\nu S^* = \mu V^*$. We substitute the ODEs into our derivative and use these identities:
+
+\begin{align*}
+\frac{dL}{dt} &= \left( 1 - \frac{S^*}{S} \right) \left[ (\nu + \mu)(S^* - S) - (\beta_1 I_1 + \beta_2 I_2)S \right] \\
+&\quad + \left( 1 - \frac{V^*}{V} \right) \left[ \nu S - \frac{\nu S^*}{V^*}V - (\sigma_1 \beta_1 I_1 + \sigma_2 \beta_2 I_2)V \right] \\
+&\quad + \left[ (\beta_1 S + \sigma_1 \beta_1 V)I_1 - (\gamma_1 + \mu)I_1 \right] + \left[ (\beta_2 S + \sigma_2 \beta_2 V)I_2 - (\gamma_2 + \mu)I_2 \right]
+\end{align*}
+
+Expanding the terms and grouping the $I_1$ and $I_2$ components:
+
+\begin{align*}
+\frac{dL}{dt} &= -(\nu + \mu) \frac{(S - S^*)^2}{S} - (S - S^*)(\beta_1 I_1 + \beta_2 I_2) \\
+&\quad + \nu \left( S - S^* \frac{V}{V^*} - S \frac{V^*}{V} + S^* \right) - (V - V^*)(\sigma_1 \beta_1 I_1 + \sigma_2 \beta_2 I_2) \\
+&\quad + \beta_1 S I_1 + \sigma_1 \beta_1 V I_1 - (\gamma_1 + \mu)I_1 + \beta_2 S I_2 + \sigma_2 \beta_2 V I_2 - (\gamma_2 + \mu)I_2
+\end{align*}
+
+Notice that the non-linear terms $(\beta_1 S I_1)$ and $(\sigma_1 \beta_1 V I_1)$ cancel out perfectly with the respective expanded terms from the susceptible and vaccinated equations. Grouping the remaining $I_1$ and $I_2$ terms gives:
+
+\begin{align*}
+I_1 \left[ \beta_1 S^* + \sigma_1 \beta_1 V^* - (\gamma_1 + \mu) \right] &= I_1 (\gamma_1 + \mu) (R_{0,1} - 1) \\
+I_2 \left[ \beta_2 S^* + \sigma_2 \beta_2 V^* - (\gamma_2 + \mu) \right] &= I_2 (\gamma_2 + \mu) (R_{0,2} - 1)
+\end{align*}
+
+Now, we handle the non-infected terms. We split $-(\nu + \mu) \frac{(S - S^*)^2}{S}$ into $-\mu \frac{(S - S^*)^2}{S} - \nu \frac{(S - S^*)^2}{S}$ and group the $\nu$ components:
+
+\begin{align*}
+-\nu \left( S - 2S^* + \frac{(S^*)^2}{S} \right) + \nu \left( S - S^* \frac{V}{V^*} - S \frac{V^*}{V} + S^* \right) &= \nu S^* \left( 3 - \frac{S^*}{S} - \frac{V}{V^*} - \frac{S V^*}{S^* V} \right)
+\end{align*}
+
+Thus, the fully simplified derivative is:
+
+\begin{equation}
+\frac{dL}{dt} = -\mu \frac{(S - S^*)^2}{S} + \nu S^* \left( 3 - \frac{S^*}{S} - \frac{V}{V^*} - \frac{S V^*}{S^* V} \right) + (\gamma_1 + \mu)(R_{0,1} - 1)I_1 + (\gamma_2 + \mu)(R_{0,2} - 1)I_2
+\end{equation}
+
+Applying the AM-GM inequality to the three positive terms $\frac{S^*}{S}$, $\frac{V}{V^*}$, and $\frac{S V^*}{S^* V}$ yields an arithmetic mean that is greater than or equal to their geometric mean (which is $1$). Thus:
+\begin{equation}
+3 - \frac{S^*}{S} - \frac{V}{V^*} - \frac{S V^*}{S^* V} \le 0
+\end{equation}
+
+Therefore, if $R_{0,1} \le 1$ and $R_{0,2} \le 1$ (which implies $R_0 \le 1$), every term in the expression for $\frac{dL}{dt}$ is less than or equal to zero. 
+
+Thus, $\frac{dL}{dt} \le 0$. Furthermore, $\frac{dL}{dt} = 0$ strictly when $S = S^*$, $V = V^*$, $I_1 = 0$, and $I_2 = 0$. By LaSalle's Invariance Principle, the largest invariant set within $\{ (S, V, I_1, I_2) \mid \frac{dL}{dt} = 0 \}$ is the singleton $\{ E_0 \}$. Hence, the Disease-Free Equilibrium is Globally Asymptotically Stable when $R_0 \le 1$.
+
+Note: This Lyapunov function establishes global stability strictly for the disease-free state ($R_0 \le 1$). Analyzing the global stability of the Endemic Equilibrium ($R_0 > 1$) requires a highly complex formulation outside the scope of this paper; hence, the behavior of the system for $R_0 > 1$ is explored numerically in Section 4.
+
+\section{Computational Simulation and Sensitivity Analysis}
+To bridge the theoretical mathematical analysis with applied epidemiological data, we performed numerical integration of the SVIR system using \texttt{scipy.integrate.odeint} in Python. We use an RK45-based solver to track the competition between two strains (e.g., Delta vs. Omicron) over a 1095-day (3-year) period. This specific timeframe was chosen to reflect realistic viral mutation timelines, capturing the acute displacement phase of the variants and their subsequent stabilization into an endemic state.
+
+\subsection{Parameters and Initial Conditions}
+The simulation relies on the following fixed parameters and initial conditions:
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|c|l|c|}
+        \hline
+        \textbf{Parameter/Variable} & \textbf{Description} & \textbf{Value} \\
+        \hline
+        $\mu$ & Natural mortality rate (assuming 70-year lifespan) & $1 / (70 \times 365)$ \\
+        $\Lambda$ & Recruitment rate ($\Lambda = \mu$) & $\mu$ \\
+        $\gamma_1, \gamma_2$ & Recovery rates for both strains & $1 / 14$ \\
+        $S(0)$ & Initial susceptible population fraction & $0.948$ \\
+        $V(0)$ & Initial vaccinated population fraction & $0.05$ \\
+        $I_1(0), I_2(0)$ & Initial infected population fractions & $0.001$ \\
+        $R(0)$ & Initial recovered population fraction & $0.0$ \\
+        \hline
+    \end{tabular}
+    \caption{Fixed parameters and initial conditions for the numerical simulation.}
+    \label{tab:parameters}
+\end{table}
+
+\subsection{Scenario A: Baseline Competition}
+In our baseline scenario, we model a population where vaccination occurs at a standard rate ($\nu = 0.01$). Strain 1 represents a less evasive variant with a vaccine leakage of $\sigma_1 = 0.10$ (90\% efficacy). Strain 2 represents a highly evasive variant with a leakage of $\sigma_2 = 0.60$ (40\% efficacy) and a higher transmission rate ($\beta_2 = 1.16$ vs $\beta_1 = 0.60$).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{scenario_A.png}
+    \caption{Baseline Competition showing Strain 2 driving Strain 1 to extinction.}
+    \label{fig:scenario_A}
+\end{figure}
+
+As shown in Figure \ref{fig:scenario_A}, Strain 1 peaks early due to the highly susceptible initial population. However, because of the higher immune escape ($\sigma_2$) and transmission rate ($\beta_2$), Strain 2 eventually dominates the host population, driving Strain 1 to extinction. This demonstrates the Competitive Exclusion Principle mathematically occurring within the host population.
+
+Note: Because the demographic turnover ($\mu$) is exceedingly slow (70-year lifespan), the virus rapidly exhausts the susceptible pool. The subsequent endemic equilibrium exists at a microscopic prevalence level, appearing as visual extinction on a linear scale, though mathematically $I_2 > 0$ for $t \to \infty$.
+
+\subsection{Scenario B: Vaccination Surge}
+We then increased the vaccination rate to $\nu = 0.05$ to observe the impact of a massive vaccination campaign. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{scenario_B.png}
+    \caption{Impact of a Vaccination Surge.}
+    \label{fig:scenario_B}
+\end{figure}
+
+In Figure \ref{fig:scenario_B}, the rapid increase in the vaccinated population completely flattens the curve for Strain 1, effectively suppressing the outbreak. However, Strain 2 still experiences a significant surge. This proves that while increasing the vaccination rate protects against standard strains, it cannot fully stop a highly evasive variant.
+
+\subsection{Scenario C: Sensitivity of Strain 2 to Transmission Rate}
+To systematically analyze the exact threshold where the evasive variant overtakes the system, we ran simulations across 20 different values of $\beta_2$ (ranging from $0.5$ to $1.5$) and plotted the peak prevalence of the Strain 2 outbreak.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{scenario_C.png}
+    \caption{Sensitivity Analysis: Peak Prevalence vs Transmission Rate ($\beta_2$).}
+    \label{fig:scenario_C}
+\end{figure}
+
+Figure \ref{fig:scenario_C} illustrates a profound phase transition driven by multi-strain competition. While our analytical derivation proves Strain 2 becomes viable at $\beta_2^* \approx 0.073$, the graph shows peak prevalence remaining near zero until approximately $\beta_2 \approx 0.45$. This discrepancy highlights the effect of resource depletion: in the range $0.073 < \beta_2 < 0.585$, Strain 2 is viable, but the faster Strain 1 ($\beta_1 = 0.60$) rapidly consumes the susceptible pool, artificially suppressing Strain 2's peak. The macroscopic exponential surge in Figure \ref{fig:scenario_C} only occurs as $\beta_2$ approaches our derived competitive dominance threshold ($\beta_2 \approx 0.585$), where Strain 2 becomes fast enough to outcompete Strain 1 for the available hosts.
+
+While Figure \ref{fig:scenario_C} visually demonstrates the phase transition, we can analytically verify the exact tipping points using the Effective Reproduction Number ($R_{eff}$) at $t=0$. For an outbreak to occur, we require $R_{eff,2}(0) > 1$, which algebraically simplifies to the critical threshold:
+$$\beta_2^* = \frac{\gamma_2 + \mu}{S(0) + \sigma_2 V(0)}$$
+Substituting our initial conditions yields $\beta_2^* \approx 0.073$. Below this transmission rate, Strain 2 immediately decays. Furthermore, for Strain 2 to outcompete Strain 1 during the initial acute phase, we require $R_{eff,2}(0) > R_{eff,1}(0)$. Setting the effective reproduction numbers equal and solving for $\beta_2$ yields a competitive dominance threshold of $\beta_2 \approx 0.585$. This analytical derivation perfectly mirrors our computational findings.
+
+\section{Conclusion}
+This project successfully modeled the multi-strain SIR dynamics under differential vaccine efficacy. Through rigorous mathematical analysis, we established the conditions for the Disease-Free Equilibrium and computed the Basic Reproduction Number ($R_0$) using the Next-Generation Matrix method. We further proved the Global Asymptotic Stability of the DFE using a Volterra-type Lyapunov function and LaSalle's Invariance Principle. Finally, our numerical simulations verified the Competitive Exclusion Principle. We analytically derived and computationally confirmed the exact transmission threshold ($\beta_2 \approx 0.073$) required for initial outbreak viability, as well as the threshold ($\beta_2 > 0.585$) required for acute competitive dominance.
+
+\end{document}

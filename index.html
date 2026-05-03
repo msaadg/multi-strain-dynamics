@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Strain SVIR Epidemic Simulator</title>
+    <!-- Load Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 300px 1fr; gap: 20px; }
+        .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { grid-column: 1 / -1; margin-top: 0; color: #2c3e50; }
+        .control-group { margin-bottom: 20px; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 0.9em; }
+        input[type="range"] { width: 100%; margin-bottom: 5px; }
+        .val-display { float: right; color: #007bff; font-weight: normal; }
+        p.description { font-size: 0.85em; color: #666; line-height: 1.4; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Survival of the Fittest: SVIR Competition Model</h1>
+    
+    <!-- Controls Panel -->
+    <div class="panel">
+        <h3>Simulation Parameters</h3>
+        <p class="description">Adjust the parameters below to observe competitive exclusion. <br><br><b>Mathematical Thresholds:</b> Based on analytical derivation, Strain 2 requires <b>&beta;<sub>2</sub> > 0.073</b> for initial outbreak viability, and <b>&beta;<sub>2</sub> > 0.585</b> to acutely outcompete Strain 1.</p>
+        
+        <div class="control-group">
+            <label>Transmission Rate: Strain 2 (&beta;<sub>2</sub>) <span class="val-display" id="val-beta2">1.16</span></label>
+            <input type="range" id="beta2" min="0.0" max="2.0" step="0.01" value="1.16">
+        </div>
+
+        <div class="control-group">
+            <label>Vaccination Rate (&nu;) <span class="val-display" id="val-nu">0.01</span></label>
+            <input type="range" id="nu" min="0.0" max="0.1" step="0.001" value="0.01">
+        </div>
+
+        <div class="control-group">
+            <label>Vaccine Leakage: Strain 1 (&sigma;<sub>1</sub>) <span class="val-display" id="val-sigma1">0.10</span></label>
+            <input type="range" id="sigma1" min="0.0" max="1.0" step="0.01" value="0.10">
+        </div>
+
+        <div class="control-group">
+            <label>Vaccine Leakage: Strain 2 (&sigma;<sub>2</sub>) <span class="val-display" id="val-sigma2">0.60</span></label>
+            <input type="range" id="sigma2" min="0.0" max="1.0" step="0.01" value="0.60">
+        </div>
+
+        <div class="control-group">
+            <label>Simulation Days <span class="val-display" id="val-days">1095</span></label>
+            <input type="range" id="days" min="365" max="5000" step="1" value="1095">
+        </div>
+    </div>
+
+    <!-- Graph Panel -->
+    <div class="panel">
+        <div id="plot" style="width:100%;height:600px;"></div>
+    </div>
+</div>
+
+<script>
+    // System Constants
+    const MU = 1 / (70 * 365);
+    const LAMBDA = MU;
+    const GAMMA1 = 1 / 14;
+    const GAMMA2 = 1 / 14;
+    const BETA1 = 0.60;
+
+    // Initial Conditions
+    const INITIAL_STATE = [0.948, 0.05, 0.001, 0.001, 0.0];
+
+    // ODE System (Derivatives)
+    function svir_derivatives(state, params) {
+        let [S, V, I1, I2, R] = state;
+        let dS = LAMBDA - (BETA1*I1 + params.beta2*I2)*S - (params.nu + MU)*S;
+        let dV = params.nu*S - (params.sigma1*BETA1*I1 + params.sigma2*params.beta2*I2)*V - MU*V;
+        let dI1 = (BETA1*S + params.sigma1*BETA1*V)*I1 - (GAMMA1 + MU)*I1;
+        let dI2 = (params.beta2*S + params.sigma2*params.beta2*V)*I2 - (GAMMA2 + MU)*I2;
+        let dR = GAMMA1*I1 + GAMMA2*I2 - MU*R;
+        return [dS, dV, dI1, dI2, dR];
+    }
+
+    // Runge-Kutta 4 Integrator
+    function runge_kutta_4(state, params, dt) {
+        let k1 = svir_derivatives(state, params);
+        let s2 = state.map((val, i) => val + 0.5 * dt * k1[i]);
+        
+        let k2 = svir_derivatives(s2, params);
+        let s3 = state.map((val, i) => val + 0.5 * dt * k2[i]);
+        
+        let k3 = svir_derivatives(s3, params);
+        let s4 = state.map((val, i) => val + dt * k3[i]);
+        
+        let k4 = svir_derivatives(s4, params);
+        
+        return state.map((val, i) => val + (dt / 6.0) * (k1[i] + 2*k2[i] + 2*k3[i] + k4[i]));
+    }
+
+    // Main Simulation Function
+    function runSimulation() {
+        // Get values from sliders
+        let params = {
+            beta2: parseFloat(document.getElementById('beta2').value),
+            nu: parseFloat(document.getElementById('nu').value),
+            sigma1: parseFloat(document.getElementById('sigma1').value),
+            sigma2: parseFloat(document.getElementById('sigma2').value),
+        };
+        let totalDays = parseInt(document.getElementById('days').value);
+
+        let t = [];
+        let S = [], V = [], I1 = [], I2 = [], R = [];
+        let currentState = [...INITIAL_STATE];
+        let dt = 1.0; // 1 day steps
+
+        for(let day = 0; day <= totalDays; day++) {
+            t.push(day);
+            S.push(currentState[0]);
+            V.push(currentState[1]);
+            I1.push(currentState[2]);
+            I2.push(currentState[3]);
+            R.push(currentState[4]);
+            
+            currentState = runge_kutta_4(currentState, params, dt);
+        }
+
+        drawPlot(t, S, V, I1, I2, R);
+    }
+
+    // Plotly Graphing Function
+    function drawPlot(t, S, V, I1, I2, R) {
+        let traceS = { x: t, y: S, mode: 'lines', name: 'Susceptible (S)', line: {color: '#1f77b4'} };
+        let traceV = { x: t, y: V, mode: 'lines', name: 'Vaccinated (V)', line: {color: '#ff7f0e'} };
+        let traceI1 = { x: t, y: I1, mode: 'lines', name: 'Strain 1 (Delta)', line: {color: '#d62728', dash: 'dash'} };
+        let traceI2 = { x: t, y: I2, mode: 'lines', name: 'Strain 2 (Omicron)', line: {color: '#9467bd', dash: 'dashdot'} };
+        let traceR = { x: t, y: R, mode: 'lines', name: 'Recovered (R)', line: {color: '#2ca02c'} };
+
+        let layout = {
+            title: 'Interactive Multi-Strain Dynamics',
+            xaxis: { title: 'Days' },
+            yaxis: { title: 'Population Fraction', range: [0, 1.05] },
+            margin: { t: 40, r: 20, b: 40, l: 60 },
+            hovermode: 'x unified'
+        };
+
+        Plotly.react('plot', [traceS, traceV, traceI1, traceI2, traceR], layout);
+    }
+
+    // Attach Event Listeners to Sliders to update graph in real-time
+    ['beta2', 'nu', 'sigma1', 'sigma2', 'days'].forEach(id => {
+        document.getElementById(id).addEventListener('input', function(e) {
+            document.getElementById('val-' + id).innerText = e.target.value;
+            runSimulation();
+        });
+    });
+
+    // Run on startup
+    runSimulation();
+</script>
+
+</body>
+</html>
