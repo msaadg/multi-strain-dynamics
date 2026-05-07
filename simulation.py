@@ -90,11 +90,11 @@ def plot_simulation(t, sol, title, filename=None):
 if __name__ == "__main__":
     # Scenario A: Baseline Competition
     # Explicitly setting days=1095 to align with the report's endemicity claim
-    t, sol_A = run_simulation(sigma1=0.10, sigma2=0.60, nu=0.01, days=1095)
+    t, sol_A = run_simulation(sigma1=0.10, sigma2=0.60, nu=0.01, days=180)
     plot_simulation(t, sol_A, "Scenario A: Baseline Competition", "scenario_A.png")
     
     # Scenario B: Vaccination Surge
-    t, sol_B = run_simulation(sigma1=0.10, sigma2=0.60, nu=0.05, days=1095)
+    t, sol_B = run_simulation(sigma1=0.10, sigma2=0.60, nu=0.05, days=180)
     plot_simulation(t, sol_B, "Scenario B: Vaccination Surge", "scenario_B.png")
 
     # Scenario C: Parameter Sweeping / Phase Portrait
@@ -102,7 +102,7 @@ if __name__ == "__main__":
     peak_I2_prevalence = []
     
     for b2 in beta2_values:
-        t, sol = run_simulation(beta2=b2, days=500) # Run slightly longer to ensure equilibrium
+        t, sol = run_simulation(beta2=b2, days=300) # Run slightly longer to ensure equilibrium
         # Take the peak prevalence of I2
         max_I2 = np.max(sol[:, 3])
         peak_I2_prevalence.append(max_I2)
